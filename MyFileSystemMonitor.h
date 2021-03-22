@@ -15,14 +15,27 @@ Q_OBJECT
 private:
     QDir _dir;
     QFileSystemWatcher _watcher;
+    QFile _logFile;
 
     static bool compareFileInfo(const QFileInfo &a, const QFileInfo &b) {
         return a.isDir() ? a.birthTime() == b.birthTime() : a.size() == b.size() && a.birthTime() == b.birthTime();
     }
+
+    void log(MyEvent ev) {
+        QString str = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss ") + ev.toString();
+        QTextStream(stdout) << str << Qt::endl;
+        _logFile.write(str.toUtf8()+"\n");
+        _logFile.flush();
+    }
+
 public:
-    MyFileSystemMonitor(const QString& path) : QObject()
+    MyFileSystemMonitor(const QString &path, const QString &logPath) : QObject(), _dir(path), _logFile(logPath)
     {
-        _dir = QDir(path);
+        if ( logPath.contains(_dir.path()) ) // will create infinite loop due to log file being updated, other solution would be to ignore the logfile
+            qFatal("Log file cannot exist inside monitored directory.");
+
+        _logFile.open(QIODevice::Append);
+
         _dir.setFilter(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
         if ( ! _watcher.addPath(path) )
@@ -56,25 +69,25 @@ public slots:
             if ( _watcher.addPath(info.filePath()) ) {
                 for(QFileInfo &renamedInfo : maybeRenamedOrDeleted) {
                     if ( compareFileInfo(renamedInfo, info) ) {
-                        QTextStream(stdout) << MyEvent(renamedInfo.filePath(), info, MyEventType::RENAMED).toString() << Qt::endl;
+                        log(MyEvent(renamedInfo.filePath(), info, MyEventType::RENAMED));
                         maybeRenamedOrDeleted.removeOne(renamedInfo);
                     }
                 }
 
-                QTextStream(stdout) <<  MyEvent(info.filePath(), info, MyEventType::CREATED).toString() << Qt::endl;
+                log(MyEvent(info.filePath(), info, MyEventType::CREATED));
             }
         }
 
         for(QFileInfo &info : maybeRenamedOrDeleted) {
-            QTextStream(stdout) <<  MyEvent(info.filePath(), info, MyEventType::DELETED).toString() << Qt::endl;
+            log(MyEvent(info.filePath(), info, MyEventType::DELETED));
         }
     }
+
     void fileChanged(const QString &path) // File Edited
     {
         if ( QFile::exists(path) )
-            QTextStream(stdout) << MyEvent(path, MyFileType::FILE, MyEventType::EDITED).toString() << Qt::endl;
+            log(MyEvent(path, MyFileType::FILE, MyEventType::EDITED));
     }
-
 };
 
 #endif // MYFILESYSTEMMONITOR_H

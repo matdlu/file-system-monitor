@@ -3,12 +3,12 @@
 #include <QtCore/QString>
 #include <QFileInfo>
 
-enum class FileType {
+enum class MyFileType {
     FILE,
     FOLDER,
 };
 
-enum class EventType {
+enum class MyEventType {
     CREATED,
     DELETED,
     EDITED,
@@ -18,41 +18,41 @@ enum class EventType {
 class MyEvent {
     private:
         QString _fileLocation;
-        FileType _fileType;
-        EventType _eventType;
+        MyFileType _fileType;
+        MyEventType _eventType;
 
     public:
-        MyEvent(QString fileLocation, FileType fileType, EventType eventType) {
+        MyEvent(QString fileLocation, MyFileType fileType, MyEventType eventType) {
             this->_fileLocation = fileLocation;
             this->_fileType = fileType;
             this->_eventType = eventType;
         };
-        MyEvent(QString fileLocation, const QFileInfo &info, EventType eventType) : MyEvent(fileLocation, fileType(info), eventType) {};
+        MyEvent(QString fileLocation, const QFileInfo &info, MyEventType eventType) : MyEvent(fileLocation, fileType(info), eventType) {};
 
         QString fileLocation() {
             return this->_fileLocation;
         }
-        FileType fileType() {
+        MyFileType fileType() {
             return this->_fileType;
         }
-        EventType eventType() {
+        MyEventType eventType() {
             return this->_eventType;
         }
 
-        static FileType fileType(const QFileInfo& info) {
-            return info.isDir() ? FileType::FOLDER : FileType::FILE;
+        static MyFileType fileType(const QFileInfo& info) {
+            return info.isDir() ? MyFileType::FOLDER : MyFileType::FILE;
         }
 
-        static QString fileTypeToString(const FileType fileType) {
-            return fileType == FileType::FILE ? "file" : "folder";
+        static QString fileTypeToString(const MyFileType fileType) {
+            return fileType == MyFileType::FILE ? "file" : "folder";
         }
 
         QString toString() {
             switch (_eventType) {
-                case EventType::CREATED: return fileTypeToString(_fileType) + " created: " + _fileLocation;
-                case EventType::DELETED: return fileTypeToString(_fileType) + " deleted: " + _fileLocation;
-                case EventType::EDITED:  return fileTypeToString(_fileType) + " edited: "  + _fileLocation;
-                case EventType::RENAMED: return fileTypeToString(_fileType) + " renamed: " + _fileLocation;
+                case MyEventType::CREATED: return fileTypeToString(_fileType) + " created: " + _fileLocation;
+                case MyEventType::DELETED: return fileTypeToString(_fileType) + " deleted: " + _fileLocation;
+                case MyEventType::EDITED:  return fileTypeToString(_fileType) + " edited: "  + _fileLocation;
+                case MyEventType::RENAMED: return fileTypeToString(_fileType) + " renamed: " + _fileLocation;
             }
             return 0;
         }

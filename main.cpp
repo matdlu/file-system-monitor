@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
         qFatal("Path is not a directory.");
     }
 
-    MyFileSystemMonitor monitor(cwd);
+    MyFileSystemMonitor monitor(cwd, "/home/user/logs.txt");
 
     return app.exec();
 }
