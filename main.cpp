@@ -1,5 +1,5 @@
-#include <QtCore/QCoreApplication>
-#include <QtCore/QFileInfo>
+#include <QCoreApplication>
+#include <QFileInfo>
 #include <MyFileSystemMonitor.h>
 
 int main(int argc, char** argv) {
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
         qFatal("Path is not a directory.");
     }
 
-    MyFileSystemMonitor monitor(cwd, "/home/user/logs.txt");
+    MyFileSystemMonitor monitor(cwd, "C:/logs.txt");
 
     return app.exec();
 }

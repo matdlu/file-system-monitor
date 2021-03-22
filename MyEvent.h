@@ -1,6 +1,6 @@
 #ifndef MYEVENT_H
 #define MYEVENT_H
-#include <QtCore/QString>
+#include <QString>
 #include <QFileInfo>
 
 enum class MyFileType {

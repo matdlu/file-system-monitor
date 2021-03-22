@@ -1,11 +1,11 @@
 #ifndef MYFILESYSTEMMONITOR_H
 #define MYFILESYSTEMMONITOR_H
-#include <QtCore/QObject>
-#include <QtCore/QFileSystemWatcher>
-#include <QtCore/QTextStream>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QDateTime>
+#include <QObject>
+#include <QFileSystemWatcher>
+#include <QTextStream>
+#include <QDir>
+#include <QFile>
+#include <QDateTime>
 #include <MyEvent.h>
 
 class MyFileSystemMonitor : public QObject
@@ -18,12 +18,12 @@ private:
     QFile _logFile;
 
     static bool compareFileInfo(const QFileInfo &a, const QFileInfo &b) {
-        return a.isDir() ? a.birthTime() == b.birthTime() : a.size() == b.size() && a.birthTime() == b.birthTime();
+        return a.isDir() ? a.lastModified() == b.lastModified() : a.size() == b.size() && a.lastModified() == b.lastModified();
     }
 
     void log(MyEvent ev) {
         QString str = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss ") + ev.toString();
-        QTextStream(stdout) << str << Qt::endl;
+        QTextStream(stdout) << str << endl;
         _logFile.write(str.toUtf8()+"\n");
         _logFile.flush();
     }
