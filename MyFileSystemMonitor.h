@@ -4,6 +4,9 @@
 #include <QtCore/QFileSystemWatcher>
 #include <QtCore/QTextStream>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QDateTime>
+#include <MyEvent.h>
 
 class MyFileSystemMonitor : public QObject
 {
@@ -13,39 +16,61 @@ private:
     QDir _dir;
     QFileSystemWatcher _watcher;
 
-    void addNewFiles()
-    {
-        _dir.refresh();
-        for(QString &fileName : _dir.entryList())
-            _watcher.addPath(_dir.path() + "/" + fileName);
+    bool compareFileInfo(const QFileInfo &a, const QFileInfo &b) {
+        return a.isDir() ? a.birthTime() == b.birthTime() : a.size() == b.size() && a.birthTime() == b.birthTime();
     }
-    void contentsChanged()
-    {
-        QTextStream(stdout) << "contents of the folder have been changed" << Qt::endl;
-    }
-
 public:
-    MyFileSystemMonitor(const QString& path) : QObject(), _dir(path)
+    MyFileSystemMonitor(const QString& path) : QObject()
     {
-        _dir.setFilter(QDir::Files);
+        _dir = QDir(path);
+        _dir.setFilter(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
-        _watcher.addPath(path);
-        addNewFiles();
+        if ( ! _watcher.addPath(path) )
+            qFatal("Path cannot be monitored.");
+
+        for(QFileInfo &info : _dir.entryInfoList())
+            _watcher.addPath(info.filePath());
 
         this->connect(&_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged()));
-        this->connect(&_watcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChanged()));
+        this->connect(&_watcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChanged(QString)));
     }
 
 public slots:
-    void directoryChanged()
+    void directoryChanged() // File/Folder Created, File/Folder Deleted, File/Folder Renamed
     {
-        addNewFiles();
+        QFileInfoList maybeRenamedOrDeleted;
 
-        contentsChanged();
+        // old files
+        for(QFileInfo &info : _dir.entryInfoList()) {
+            if ( ! QFile::exists(info.filePath()) ) {
+                maybeRenamedOrDeleted.append(info);
+                _watcher.removePath(info.filePath());
+            }
+        }
+
+        // new files
+        _dir.refresh();
+        for(QFileInfo &info : _dir.entryInfoList()) {
+            if ( _watcher.addPath(info.filePath()) ) {
+                for(QFileInfo &renamedInfo : maybeRenamedOrDeleted) {
+                    if ( compareFileInfo(renamedInfo, info) ) {
+                        QTextStream(stdout) << MyEvent(renamedInfo.filePath(), info, MyEventType::RENAMED).toString() << Qt::endl;
+                        maybeRenamedOrDeleted.removeOne(renamedInfo);
+                    }
+                }
+
+                QTextStream(stdout) <<  MyEvent(info.filePath(), info, MyEventType::CREATED).toString() << Qt::endl;
+            }
+        }
+
+        for(QFileInfo &info : maybeRenamedOrDeleted) {
+            QTextStream(stdout) <<  MyEvent(info.filePath(), info, MyEventType::DELETED).toString() << Qt::endl;
+        }
     }
-    void fileChanged()
+    void fileChanged(const QString &path) // File Edited
     {
-        contentsChanged();
+        if ( QFile::exists(path) )
+            QTextStream(stdout) << MyEvent(path, MyFileType::FILE, MyEventType::EDITED).toString() << Qt::endl;
     }
 
 };
