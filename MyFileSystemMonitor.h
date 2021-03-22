@@ -16,7 +16,7 @@ private:
     QDir _dir;
     QFileSystemWatcher _watcher;
 
-    bool compareFileInfo(const QFileInfo &a, const QFileInfo &b) {
+    static bool compareFileInfo(const QFileInfo &a, const QFileInfo &b) {
         return a.isDir() ? a.birthTime() == b.birthTime() : a.size() == b.size() && a.birthTime() == b.birthTime();
     }
 public:
