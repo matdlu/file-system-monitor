@@ -31,13 +31,15 @@ public:
         for(QFileInfo &info : _dir.entryInfoList())
             _watcher.addPath(info.filePath());
 
-        this->connect(&_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged()));
+        this->connect(&_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
         this->connect(&_watcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChanged(QString)));
     }
 
 public slots:
-    void directoryChanged() // File/Folder Created, File/Folder Deleted, File/Folder Renamed
+    void directoryChanged(const QString &path) // File/Folder Created, File/Folder Deleted, File/Folder Renamed
     {
+        if ( path != _dir.path() ) return; // do not consider subfolders
+
         QFileInfoList maybeRenamedOrDeleted;
 
         // old files
